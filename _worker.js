@@ -1,7 +1,6 @@
 /*!
-  * v2ray Subscription Worker v1.6
-  * Copyright 2023 Vahid Farid (https://twitter.com/vahidfarid)
-  * Licensed under GPLv3 (https://github.com/vfarid/v2ray-worker-sub/blob/main/Licence.md)
+  * v2ray Subscription Worker v1.6 - VLESS Only
+  * Modified to keep only VLESS
   */
 
 var MAX_CONFIGS = 1000;
@@ -1764,7 +1763,7 @@ var require_buffer = __commonJS({
             writable: true,
             configurable: true
           });
-          this.name = `${this.name} [${sym}]`;
+          this.name = `\( {this.name} [ \){sym}]`;
           this.stack;
           delete this.name;
         }
@@ -1780,7 +1779,7 @@ var require_buffer = __commonJS({
           });
         }
         toString() {
-          return `${this.name} [${sym}]: ${this.message}`;
+          return `\( {this.name} [ \){sym}]: ${this.message}`;
         }
       };
     }
@@ -1825,9 +1824,9 @@ var require_buffer = __commonJS({
       let i = val.length;
       const start = val[0] === "-" ? 1 : 0;
       for (; i >= start + 4; i -= 3) {
-        res = `_${val.slice(i - 3, i)}${res}`;
+        res = `_\( {val.slice(i - 3, i)} \){res}`;
       }
-      return `${val.slice(0, i)}${res}`;
+      return `\( {val.slice(0, i)} \){res}`;
     }
     function checkBounds(buf, offset, byteLength2) {
       validateNumber(offset, "offset");
@@ -1841,12 +1840,12 @@ var require_buffer = __commonJS({
         let range;
         if (byteLength2 > 3) {
           if (min === 0 || min === BigInt(0)) {
-            range = `>= 0${n} and < 2${n} ** ${(byteLength2 + 1) * 8}${n}`;
+            range = `>= 0\( {n} and < 2 \){n} ** \( {(byteLength2 + 1) * 8} \){n}`;
           } else {
-            range = `>= -(2${n} ** ${(byteLength2 + 1) * 8 - 1}${n}) and < 2 ** ${(byteLength2 + 1) * 8 - 1}${n}`;
+            range = `>= -(2${n} ** \( {(byteLength2 + 1) * 8 - 1} \){n}) and < 2 ** \( {(byteLength2 + 1) * 8 - 1} \){n}`;
           }
         } else {
-          range = `>= ${min}${n} and <= ${max}${n}`;
+          range = `>= \( {min} \){n} and <= \( {max} \){n}`;
         }
         throw new errors.ERR_OUT_OF_RANGE("value", range, value);
       }
@@ -2090,18 +2089,18 @@ var src_default = {
           for (const link of sub.urls) {
             newConfigs.push(await fetch(link).then((r) => r.text()));
             if (sub.type === "b64") {
-              newConfigs = import_buffer.Buffer.from(newConfigs, "base64").toString("utf-8");
+              newConfigs = import_buffer.Buffer.from(newConfigs.join("\n"), "base64").toString("utf-8");
             }
           }
           newConfigs = newConfigs.join("\n").split("\n");
           acceptableConfigList.push({
             name: sub.name,
-            configs: newConfigs.filter((cnf) => cnf.match(/^(vmess|vless|trojan):\/\//i))
+            configs: newConfigs.filter((cnf) => cnf.match(/^vless:\/\//i))
           });
           if (includeOriginalConfigs) {
             configList.push({
               name: sub.name,
-              configs: newConfigs.filter((cnf) => cnf.match(/^(vmess|vless|trojan|ss|ssr):\/\//i))
+              configs: newConfigs.filter((cnf) => cnf.match(/^vless:\/\//i))
             });
           }
         } catch (e) {
@@ -2142,52 +2141,10 @@ var src_default = {
     } else {
       return new Response(`<!DOCTYPE html>
 <body dir="rtl">
-  <h3><font color="green">\u0647\u0645\u0647 \u0686\u06CC \u062F\u0631\u0633\u062A\u0647</font></h3>
-  <p />
+  <h3><font color="green">VLESS Subscription Worker</font></h3>
+  <p>Only VLESS configs are supported.</p>
   <p>
-    \u0627\u06CC\u0646 \u0644\u06CC\u0646\u06A9 sub \u0631\u0627 \u0647\u0645\u0631\u0627\u0647 \u0628\u0627 \u06A9\u062F \u0627\u067E\u0631\u0627\u062A\u0648\u0631 \u062F\u0631 \u0627\u067E v2ray \u062E\u0648\u062F \u06A9\u067E\u06CC \u06A9\u0646\u06CC\u062F. \u0628\u0631\u0627\u06CC \u0645\u062B\u0627\u0644 \u062F\u0631 \u0647\u0645\u0631\u0627\u0647 \u0627\u0648\u0644 \u0628\u0647 \u0634\u06A9\u0644 \u0632\u06CC\u0631 \u062E\u0648\u062F \u0628\u0648\u062F:
-  </p>
-  <p>
-    <a href="https://${url.hostname}/sub/mci">https://${url.hostname}/sub/mci</a>
-  </p>
-  <p>
-    \u0648 \u06CC\u0627 \u0647\u0645\u06CC\u0646 \u0644\u06CC\u0646\u06A9 \u0631\u0627 \u0647\u0645\u0631\u0627\u0647 \u0622\u06CC\u200C\u067E\u06CC \u062A\u0645\u06CC\u0632 \u062F\u0631 \u0627\u067E \u062E\u0648\u062F \u0627\u0636\u0627\u0641\u0647 \u06A9\u0646\u06CC\u062F:
-  </p>
-  <p>
-    <a href="https://${url.hostname}/sub/1.2.3.4">https://${url.hostname}/sub/1.2.3.4</a>
-  </p>
-  <p>
-    \u0645\u06CC\u200C\u062A\u0648\u0627\u0646\u06CC\u062F \u0686\u0646\u062F \u0622\u06CC\u200C\u067E\u06CC \u062A\u0645\u06CC\u0632 \u0631\u0627 \u0628\u0627 \u06A9\u0627\u0645\u0627 \u062C\u062F\u0627 \u06A9\u0646\u06CC\u062F. \u062F\u0631 \u0627\u06CC\u0646 \u0635\u0648\u0631\u062A \u0628\u0631\u0627\u06CC \u0647\u0631 \u0622\u06CC\u200C\u067E\u06CC \u062A\u0645\u06CC\u0632 \u0628\u0647 \u062A\u0639\u062F\u0627\u062F \u0642\u062F\u06CC\u062F \u0634\u062F\u0647\u060C \u06A9\u0627\u0646\u0641\u06CC\u06A9 \u062A\u0631\u06A9\u06CC\u0628 \u0634\u062F\u0647 \u0628\u0627 \u0648\u0631\u06A9\u0631 \u062A\u062D\u0648\u06CC\u0644 \u0645\u06CC \u062F\u0647\u062F:
-  </p>
-  <p>
-    <a href="https://${url.hostname}/sub/1.2.3.4,9.8.7.6">https://${url.hostname}/sub/1.2.3.4,9.8.7.6</a>
-  </p>
-  <p>
-    \u062F\u0642\u06CC\u0642\u0627 \u0628\u0627 \u0647\u0645\u06CC\u0646 \u0645\u062F\u0644 \u0645\u06CC\u200C\u062A\u0648\u0627\u0646\u06CC\u062F \u062F\u0627\u0645\u06CC\u0646 \u0622\u06CC\u200C\u067E\u06CC \u062A\u0645\u06CC\u0632 \u0646\u06CC\u0632 \u0627\u0633\u062A\u0641\u0627\u062F\u0647 \u06A9\u0646\u06CC\u062F:
-  </p>
-  <p>
-    <a href="https://${url.hostname}/sub/mci.ircf.space">https://${url.hostname}/sub/mci.ircf.space</a>
-  </p>
-  <p>
-    \u0645\u06CC\u200C\u062A\u0648\u0627\u0646\u06CC\u062F \u0627\u0632 \u0686\u0646\u062F \u0633\u0627\u0628\u062F\u0627\u0645\u0646\u06CC\u0646 \u0622\u06CC\u0621\u06CC \u062A\u0645\u06CC\u0632 \u0646\u06CC\u0632 \u0627\u0633\u062A\u0641\u0627\u062F\u0647 \u06A9\u0646\u06CC\u062F:
-  </p>
-  <p>
-    <a href="https://${url.hostname}/sub/mci.ircf.space,my.domain.me">https://${url.hostname}/sub/mci.ircf.space,my.domain.me</a>
-  </p>
-  <p>
-    \u0645\u06CC\u200C\u062A\u0648\u0627\u0646\u06CC\u062F \u0628\u0627 \u0645\u062A\u063A\u06CC\u0631 max \u062A\u0639\u062F\u0627\u062F \u06A9\u0627\u0646\u0641\u06CC\u06AF \u0631\u0627 \u0645\u0634\u062E\u0635 \u06A9\u0646\u06CC\u062F:
-  </p>
-  <p>
-    <a href="https://${url.hostname}/sub/1.2.3.4?max=200">https://${url.hostname}/sub/1.2.3.4?max=200</a>
-  </p>
-  <p>
-    \u0647\u0645\u0686\u0646\u06CC\u0646 \u0645\u06CC\u200C\u062A\u0648\u0627\u0646\u06CC\u062F \u0628\u0627 \u0645\u062A\u063A\u06CC\u0631 original \u0628\u0627 \u0639\u062F\u062F 0 \u06CC\u0627 1 \u0648 \u06CC\u0627 \u0628\u0627 yes/no \u0645\u0634\u062E\u0635 \u06A9\u0646\u06CC\u062F \u06A9\u0647 \u06A9\u0627\u0646\u0641\u06CC\u06AF\u200C\u0647\u0627\u06CC \u0627\u0635\u0644\u06CC (\u062A\u0631\u06A9\u06CC\u0628 \u0646\u0634\u062F\u0647 \u0628\u0627 \u0648\u0631\u06A9\u0631) \u0647\u0645 \u062F\u0631 \u062E\u0631\u0648\u062C\u06CC \u0622\u0648\u0631\u062F\u0647 \u0634\u0648\u0646\u062F \u06CC\u0627 \u0646\u0647:
-  </p>
-  <p>
-    <a href="https://${url.hostname}/sub/1.2.3.4?max=200&original=yes">https://${url.hostname}/sub/1.2.3.4?max=200&original=yes</a>
-  </p>
-  <p>
-    <a href="https://${url.hostname}/sub/1.2.3.4?max=200&original=0">https://${url.hostname}/sub/1.2.3.4?max=200&original=0</a>
+    <a href="https://\( {url.hostname}/sub/mci">https:// \){url.hostname}/sub/mci</a>
   </p>
 </body>`, {
         headers: {
@@ -2197,29 +2154,22 @@ var src_default = {
     }
   }
 };
+
 function encodeConfig(conf) {
   var configStr = null;
   try {
-    if (conf.protocol === "vmess") {
-      delete conf.protocol;
-      configStr = "vmess://" + import_buffer.Buffer.from(JSON.stringify(conf), "utf-8").toString("base64");
-    } else if (["vless", "trojan"].includes(conf?.protocol)) {
-      configStr = `${conf.protocol}://${conf.id}@${conf.add}:${conf.port}?security=${conf.tls}&type=${conf.type}&path=${encodeURIComponent(conf.path)}&host=${encodeURIComponent(conf.host)}&tls=${conf.tls}&sni=${conf.sni}#${encodeURIComponent(conf.ps)}`;
+    if (conf.protocol === "vless") {
+      configStr = `\( {conf.protocol}:// \){conf.id}@\( {conf.add}: \){conf.port}?security=\( {conf.tls}&type= \){conf.type}&path=\( {encodeURIComponent(conf.path)}&host= \){encodeURIComponent(conf.host)}&tls=\( {conf.tls}&sni= \){conf.sni}#${encodeURIComponent(conf.ps)}`;
     }
   } catch (e) {
   }
   return configStr;
 }
+
 function decodeConfig(configStr) {
   var match = null;
   var conf = null;
-  if (configStr.startsWith("vmess://")) {
-    try {
-      conf = JSON.parse(import_buffer.Buffer.from(configStr.substring(8), "base64").toString("utf-8"));
-      conf.protocol = "vmess";
-    } catch (e) {
-    }
-  } else if (match = configStr.match(/^(?<protocol>trojan|vless):\/\/(?<id>.*)@(?<add>.*):(?<port>\d+)\??(?<options>.*)#(?<ps>.*)$/)) {
+  if (match = configStr.match(/^(?<protocol>vless):\/\/(?<id>.*)@(?<add>.*):(?<port>\d+)\??(?<options>.*)#(?<ps>.*)$/)) {
     try {
       const optionsArr = match.groups.options.split("&") ?? [];
       const optionsObj = optionsArr.reduce((obj, option) => {
@@ -2245,6 +2195,7 @@ function decodeConfig(configStr) {
   }
   return conf;
 }
+
 function mixConfig(conf, url, ip, operator, provider) {
   try {
     if (conf.tls != "tls") {
@@ -2311,6 +2262,7 @@ function mixConfig(conf, url, ip, operator, provider) {
     return {};
   }
 }
+
 function renameConfig(conf, provider) {
   try {
     conf.ps = conf?.ps ? conf.ps : conf.name;
@@ -2320,10 +2272,12 @@ function renameConfig(conf, provider) {
     return {};
   }
 }
+
 function getMultipleRandomElements(arr, num) {
   var shuffled = [...arr].sort(() => 0.5 - Math.random());
   return shuffled.slice(0, num);
 }
+
 function isIp(str) {
   try {
     if (str == "" || str == void 0)
@@ -2340,7 +2294,7 @@ function isIp(str) {
   }
   return false;
 }
+
 export {
   src_default as default
 };
-//# sourceMappingURL=index.js.map
