@@ -1,267 +1,117 @@
-/*!
- * v2ray Subscription Worker - Optimized v2.0 (VIP Path)
- * 支持 /vip/ 路径
- */
+let 快速订阅访问入口 = ['auto'];
+let addresses = [];
+let addressesapi = [];
+let addressesnotls = [];
+let addressesnotlsapi = [];
+let addressescsv = [];
+let DLS = 7;
+let remarkIndex = 1;
 
-const MAX_CONFIGS = 1000;
-const INCLUDE_ORIGINAL = true;
+let subConverter = 'SUBAPI.cmliussss.net';
+let subConfig = atob('aHR0cHM6Ly9yYXcuZ2l0aHVidXNlcmNvbnRlbnQuY29tL2NtbGl1L0FDTDRTU1IvbWFpbi9DbGFzaC9jb25maWcvQUNMNFNTUl9PbmxpbmVfRnVsbF9NdWx0aU1vZGUuaW5p');
+let subProtocol = 'https';
+let FileName = 'VIP VLESS 优选订阅';
+let 网络备案 = `<a href='https://t.me/CMLiussss'>VIP订阅优化版</a>`;
 
-const configProviders = [
-  { name: "vpei", type: "b64", urls: ["https://raw.githubusercontent.com/free18/v2ray/refs/heads/main/v.txt"] },
-  { name: "mfuu", type: "b64", urls: ["https://raw.githubusercontent.com/mfuu/v2ray/master/v2ray"] },
-  { name: "peasoft", type: "raw", urls: ["https://raw.githubusercontent.com/peasoft/NoMoreWalls/master/list_raw.txt"] },
-  { name: "ermaozi", type: "b64", urls: ["https://raw.githubusercontent.com/ermaozi/get_subscribe/main/subscribe/v2ray.txt"] },
-  { name: "aiboboxx", type: "b64", urls: ["https://raw.githubusercontent.com/chengaopan/AutoMergePublicNodes/master/list.txt"] },
-  { name: "mahdibland", type: "raw", urls: [
-    "https://raw.githubusercontent.com/mahdibland/V2RayAggregator/master/sub/splitted/vmess.txt",
-    "https://raw.githubusercontent.com/mahdibland/V2RayAggregator/master/sub/splitted/trojan.txt"
-  ]},
-  { name: "bardiafa", type: "raw", urls: ["https://raw.githubusercontent.com/Bardiafa/Free-V2ray-Config/main/All_Configs_Sub.txt"] },
-  { name: "autoproxy", type: "b64", urls: [
-    "https://raw.githubusercontent.com/w1770946466/Auto_proxy/main/Long_term_subscription1",
-    "https://raw.githubusercontent.com/w1770946466/Auto_proxy/main/Long_term_subscription2",
-    "https://raw.githubusercontent.com/w1770946466/Auto_proxy/main/Long_term_subscription3",
-    "https://raw.githubusercontent.com/w1770946466/Auto_proxy/main/Long_term_subscription4",
-    "https://raw.githubusercontent.com/w1770946466/Auto_proxy/main/Long_term_subscription5",
-    "https://raw.githubusercontent.com/w1770946466/Auto_proxy/main/Long_term_subscription6",
-    "https://raw.githubusercontent.com/w1770946466/Auto_proxy/main/Long_term_subscription7",
-    "https://raw.githubusercontent.com/w1770946466/Auto_proxy/main/Long_term_subscription8"
-  ]},
-  { name: "freefq", type: "b64", urls: ["https://raw.githubusercontent.com/freefq/free/master/v2"] },
-  { name: "pawdroid", type: "b64", urls: ["https://raw.githubusercontent.com/Pawdroid/Free-servers/main/sub"] },
-  { name: "free18", type: "b64", urls: ["https://raw.githubusercontent.com/free18/v2ray/refs/heads/main/v.txt"] },
-  { name: "chengaopan", type: "b64", urls: ["https://raw.githubusercontent.com/chengaopan/AutoMergePublicNodes/master/list.txt"] },
-  { name: "shadowmere", type: "b64", urls: ["https://shadowmere.xyz/api/b64sub/"] }
-];
+let proxyIPs = [atob('cHJveHlpcC5meHhrLmRlZHluLmlv')];
+let httpsPorts = ["2053", "2083", "2087", "2096", "8443"];
 
-const ipProviderLink = "https://raw.githubusercontent.com/vfarid/cf-clean-ips/main/list.json";
-
-const addressList = [
-  "discord.com", "cloudflare.com", "nginx.com", "www.speedtest.com",
-  "laravel.com", "chat.openai.com", "codepen.io", "api.jquery.com"
-];
-
-const fpList = ["chrome", "chrome", "firefox", "safari", "edge", "ios", "android", "random"];
-const alpnList = ["http/1.1", "h2,http/1.1"];
-
-// Base64 辅助函数（使用 Workers 原生 API）
-const base64Encode = (str) => btoa(unescape(encodeURIComponent(str)));
-const base64Decode = (str) => decodeURIComponent(escape(atob(str.trim())));
-
-function getMultipleRandomElements(arr, num) {
-  return [...arr].sort(() => 0.5 - Math.random()).slice(0, num);
+async function 整理(内容) {
+    var 替换后的内容 = 内容.replace(/[	|"'\r\n]+/g, ',').replace(/,+/g, ',');
+    if (替换后的内容.charAt(0) == ',') 替换后的内容 = 替换后的内容.slice(1);
+    if (替换后的内容.charAt(替换后的内容.length - 1) == ',') 替换后的内容 = 替换后的内容.slice(0, -1);
+    return 替换后的内容.split(',').filter(Boolean);
 }
 
-function isIp(str) {
-  return /^(\d{1,2}|1\d\d|2[0-4]\d|25[0-5])(\.(\d{1,2}|1\d\d|2[0-4]\d|25[0-5])){3}$/.test(str);
-}
-
-// 解码配置
-function decodeConfig(configStr) {
-  if (configStr.startsWith("vmess://")) {
+async function 整理优选列表(api) {
+    if (!api || api.length === 0) return [];
+    let newapi = "";
     try {
-      const json = JSON.parse(base64Decode(configStr.slice(8)));
-      json.protocol = "vmess";
-      return json;
-    } catch (e) {}
-  } else if (/^(vless|trojan):\/\//.test(configStr)) {
-    try {
-      const match = configStr.match(/^(?<protocol>vless|trojan):\/\/(?<id>[^@]+)@(?<add>[^:]+):(?<port>\d+)(?:\?(?<options>[^#]+))?(?:#(?<ps>.+))?$/);
-      if (!match?.groups) return null;
-
-      const opts = {};
-      if (match.groups.options) {
-        match.groups.options.split('&').forEach(p => {
-          const [k, v] = p.split('=');
-          if (k && v) opts[k] = decodeURIComponent(v);
-        });
-      }
-
-      return {
-        protocol: match.groups.protocol,
-        id: match.groups.id,
-        add: match.groups.add,
-        port: match.groups.port || "443",
-        ps: match.groups.ps,
-        type: opts.type || "tcp",
-        host: opts.host,
-        path: opts.path,
-        tls: opts.security || "none",
-        sni: opts.sni,
-        alpn: opts.alpn
-      };
-    } catch (e) {}
-  }
-  return null;
+        const responses = await Promise.allSettled(api.map(apiUrl => fetch(apiUrl, {
+            method: 'get',
+            headers: { 'Accept': 'text/html,application/xhtml+xml,application/xml;' },
+            signal: AbortSignal.timeout(2000)
+        }).then(r => r.ok ? r.text() : Promise.reject())));
+        
+        for (const [index, response] of responses.entries()) {
+            if (response.status === 'fulfilled') {
+                const content = await response.value;
+                newapi += content + '\n';
+            }
+        }
+    } catch (e) { console.error(e); }
+    return await 整理(newapi);
 }
 
-// 编码配置
-function encodeConfig(conf) {
-  if (!conf?.id) return null;
-  try {
-    if (conf.protocol === "vmess") {
-      const { protocol, ...rest } = conf;
-      return "vmess://" + base64Encode(JSON.stringify(rest));
-    } else if (["vless", "trojan"].includes(conf.protocol)) {
-      const params = new URLSearchParams({
-        security: conf.tls,
-        type: conf.type || "tcp",
-        path: conf.path || "/",
-        host: conf.host || "",
-        sni: conf.sni || "",
-        alpn: conf.alpn || ""
-      });
-      return `\( {conf.protocol}:// \){conf.id}@\( {conf.add}: \){conf.port}?\( {params.toString()}# \){encodeURIComponent(conf.ps)}`;
+async function 整理测速结果() {
+    if (!addressescsv.length) return [];
+    // 简化CSV处理逻辑...
+    const results = [];
+    for (const csvUrl of addressescsv) {
+        try {
+            const resp = await fetch(csvUrl);
+            if (!resp.ok) continue;
+            const text = await resp.text();
+            // 简单按行处理（可进一步优化）
+            results.push(...text.split('\n').filter(Boolean));
+        } catch (e) {}
     }
-  } catch (e) {}
-  return null;
+    return results;
 }
 
-// 混合配置（核心）
-function mixConfig(conf, hostname, ip, operator, provider) {
-  try {
-    if (conf.tls !== "tls") return null;
+function utf8ToBase64(str) {
+    return btoa(unescape(encodeURIComponent(str)));
+}
 
-    let addr = conf.sni || conf.host || conf.add;
-    if (!addr || isIp(addr)) return null;
-
-    conf.ps = `\( {provider}- \){(conf.ps || conf.name || "node")}-vip-${operator.toLowerCase()}`;
-    conf.name = conf.ps;
-    conf.host = hostname;
-    conf.sni = hostname;
-    conf.add = ip || addressList[Math.floor(Math.random() * addressList.length)];
-    conf.port = 443;
-    conf.fp = fpList[Math.floor(Math.random() * fpList.length)];
-    conf.alpn = alpnList[Math.floor(Math.random() * alpnList.length)];
-
-    conf.path = `/\( {addr}: \){conf.port || 443}${conf.path ? "/" + conf.path.replace(/^\//, "") : ""}`;
-    return conf;
-  } catch (e) {
-    return null;
-  }
+async function subHtml() {
+    const HTML = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>\( {FileName}</title><style>body{font-family:Arial;background:#f0f0f0;display:flex;justify-content:center;align-items:center;min-height:100vh;margin:0;} .container{background:white;padding:2rem;border-radius:12px;box-shadow:0 4px 20px rgba(0,0,0,0.1);max-width:600px;width:90%;} input,button{width:100%;padding:12px;margin:10px 0;border-radius:8px;} button{background:#0066ff;color:white;border:none;cursor:pointer;}</style></head><body><div class="container"><h1> \){FileName}</h1><input type="text" id="link" placeholder="粘贴 VLESS 链接"><button onclick="generateLink()">生成 VIP 优选订阅</button><input type="text" id="result" readonly><div style="text-align:center;margin-top:15px;">${网络备案}</div></div><script>function generateLink(){const link=document.getElementById('link').value;if(!link){alert('请输入VLESS链接');return;}try{const domain=window.location.hostname;const uuid=link.split('//')[1].split('@')[0];const search=link.split('?')[1]||'';const subLink=\`https://\${domain}/vip?uuid=\${uuid}&\${search}\`;document.getElementById('result').value=subLink;}catch(e){alert('链接格式错误');}}</script></body></html>`;
+    return new Response(HTML, {headers: {"content-type": "text/html;charset=UTF-8"}});
 }
 
 export default {
-  async fetch(request) {
-    const url = new URL(request.url);
-    const path = url.pathname.replace(/^\/|\/$/g, "");
-    const parts = path.split("/");
+    async fetch(request, env) {
+        // 加载环境变量
+        if (env.TOKEN) 快速订阅访问入口 = await 整理(env.TOKEN);
+        if (env.SUBAPI) subConverter = env.SUBAPI.replace(/^https?:\/\//, '');
+        if (env.SUBNAME) FileName = env.SUBNAME;
+        if (env.ADD) addresses = await 整理(env.ADD);
+        if (env.ADDAPI) addressesapi = await 整理(env.ADDAPI);
+        if (env.ADDNOTLS) addressesnotls = await 整理(env.ADDNOTLS);
+        if (env.ADDCSV) addressescsv = await 整理(env.ADDCSV);
+        DLS = Number(env.DLS) || DLS;
 
-    // ==================== VIP 订阅路径 ====================
-    if (parts[0] === "vip") {
-      let cleanIPs = [];
-      let operators = ["General"];
+        const url = new URL(request.url);
+        const format = url.searchParams.get('format')?.toLowerCase() || '';
 
-      if (parts[1]) {
-        if (parts[1].includes(".")) {
-          cleanIPs = parts[1].split(",").map(ip => ({ ip: ip.trim(), operator: "IP" }));
-          operators = ["IP"];
-        } else {
-          operators = parts[1].toUpperCase().split(",");
-          try {
-            const ipData = await fetch(ipProviderLink).then(r => r.json());
-            cleanIPs = ipData.ipv4?.filter(el => operators.includes(el.operator)) || [];
-          } catch (e) {}
+        // VIP 快速订阅
+        if (快速订阅访问入口.some(token => url.pathname === `/${token}`)) {
+            // 返回内置 VLESS 优选订阅...
+            return new Response("快速订阅功能已简化", {status: 200});
         }
-      }
 
-      let maxConfigs = url.searchParams.get("max") ? parseInt(url.searchParams.get("max")) : MAX_CONFIGS;
-      let includeOriginal = INCLUDE_ORIGINAL;
-      if (url.searchParams.has("original")) {
-        const val = url.searchParams.get("original").toLowerCase();
-        includeOriginal = ["1", "true", "yes", "y"].includes(val);
-      }
+        // 主要 /vip 路径（仅VLESS）
+        if (url.pathname === '/vip') {
+            let host = url.searchParams.get('host') || env.HOST || "example.com";
+            let uuid = url.searchParams.get('uuid') || env.UUID;
+            let path = url.searchParams.get('path') || env.PATH || '/';
+            // ... 其他参数处理
 
-      if (includeOriginal) maxConfigs = Math.floor(maxConfigs / 2);
-
-      // 并行获取所有订阅源
-      const configsByProvider = await Promise.all(
-        configProviders.map(async (sub) => {
-          try {
-            const texts = await Promise.all(sub.urls.map(u => fetch(u).then(r => r.text().catch(() => ""))));
-            let allText = texts.join("\n");
-            if (sub.type === "b64") {
-              allText = base64Decode(allText);
+            // 生成优选 VLESS 订阅逻辑（简化版）
+            const links = await 整理优选列表(addressesapi);
+            let proxyList = links.map(ip => `vless://\( {uuid}@ \){ip}?type=ws&path=\( {encodeURIComponent(path)}&host= \){host}&security=tls#VIP-${ip}`).join('\n');
+            
+            if (format === 'clash' || format === 'singbox') {
+                // 调用转换后端
+                const subUrl = `\( {subProtocol}:// \){subConverter}/sub?target=\( {format}&url= \){encodeURIComponent(utf8ToBase64(proxyList))}`;
+                return fetch(subUrl);
             }
-            const lines = allText.split("\n").filter(Boolean);
-            return {
-              name: sub.name,
-              configs: lines.filter(c => /^(vmess|vless|trojan):\/\//i.test(c))
-            };
-          } catch {
-            return { name: sub.name, configs: [] };
-          }
-        })
-      );
-
-      const finalList = [];
-
-      const perProvider = Math.ceil(maxConfigs / configProviders.length);
-
-      for (const op of operators) {
-        const ips = cleanIPs.length 
-          ? cleanIPs.filter(el => el.operator === op).slice(0, 5) 
-          : [{ ip: "", operator: "General" }];
-
-        const selectedIP = ips[Math.floor(Math.random() * ips.length)].ip;
-
-        for (const provider of configsByProvider) {
-          const mixed = provider.configs
-            .map(decodeConfig)
-            .map(c => mixConfig(c, url.hostname, selectedIP, op, provider.name))
-            .filter(Boolean)
-            .map(encodeConfig)
-            .filter(Boolean);
-
-          finalList.push(...getMultipleRandomElements(mixed, perProvider));
+            
+            return new Response(utf8ToBase64(proxyList), {
+                headers: { "content-type": "text/plain; charset=utf-8", "subscription-userinfo": "upload=0;download=0;total=1000000000000" }
+            });
         }
-      }
 
-      // 原始配置
-      if (includeOriginal) {
-        for (const provider of configsByProvider) {
-          const original = provider.configs
-            .map(decodeConfig)
-            .map(c => {
-              if (c) c.ps = `\( {provider.name}- \){c.ps || c.name}`;
-              return c;
-            })
-            .filter(Boolean)
-            .map(encodeConfig)
-            .filter(Boolean);
-
-          finalList.push(...getMultipleRandomElements(original, perProvider));
-        }
-      }
-
-      const output = finalList.join("\n");
-      return new Response(base64Encode(output), {
-        headers: { 
-          "content-type": "text/plain; charset=utf-8",
-          "subscription-userinfo": "upload=0; download=0; total=0; expire=0"
-        }
-      });
+        // 默认返回 HTML 页面
+        return await subHtml();
     }
-
-    // 其他路径直接转发
-    if (path) {
-      return fetch(`https://${path}`, request);
-    }
-
-    // 默认首页
-    return new Response(`
-<!DOCTYPE html>
-<html>
-<head><meta charset="utf-8"><title>VIP Subscription Worker</title></head>
-<body dir="rtl" style="font-family: Arial; text-align: center; padding: 40px;">
-  <h2><font color="green">✅ VIP 订阅 Worker 已就绪</font></h2>
-  <p>使用示例：</p>
-  <p><strong>https://${url.hostname}/vip/mci</strong></p>
-  <p><strong>https://${url.hostname}/vip/1.1.1.1</strong></p>
-  <p><strong>https://${url.hostname}/vip/1.1.1.1,8.8.8.8?max=300&original=yes</strong></p>
-</body>
-</html>`, {
-      headers: { "content-type": "text/html;charset=UTF-8" }
-    });
-  }
 };
